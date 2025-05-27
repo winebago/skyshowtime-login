@@ -10,8 +10,8 @@ puppeteer.use(StealthPlugin());
 const app = express();
 
 // ZADRÁTOVANÉ PŘIHLAŠOVACÍ ÚDAJE
-const SKY_EMAIL = 'dummy@example.com';
-const SKY_PASSWORD = 'heslo123';
+const SKY_EMAIL = 'tomas.vyskocil@seznam.cz';
+const SKY_PASSWORD = 'Gebruq-rimwum-5nawzu';
 
 async function loginAndGetToken() {
   const browser = await puppeteer.launch({
