@@ -3,14 +3,15 @@ const express = require('express');
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const fs = require('fs');
+const path = require('path');
 
 puppeteer.use(StealthPlugin());
 
 const app = express();
 
 // ZADRÁTOVANÉ PŘIHLAŠOVACÍ ÚDAJE
-const SKY_EMAIL = 'tomas.vyskocil@seznam.cz';
-const SKY_PASSWORD = 'Gebruq-rimwum-5nawzu';
+const SKY_EMAIL = 'dummy@example.com';
+const SKY_PASSWORD = 'heslo123';
 
 async function loginAndGetToken() {
   const browser = await puppeteer.launch({
@@ -58,6 +59,11 @@ async function loginAndGetToken() {
     await page.click('[data-testid="sign-in-form__submit"]');
     await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 });
 
+    // Klik na profil
+    await page.waitForSelector('.profiles__avatar--image', { timeout: 10000 });
+    await page.click('.profiles__avatar--image');
+    await page.waitForTimeout(3000);
+
     const html = await page.content();
     fs.writeFileSync('after-login.html', html, 'utf8');
   } catch (err) {
@@ -85,13 +91,6 @@ app.get('/sky-token', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log('✅ Server běží na portu', PORT);
-});
-
-const path = require('path');
-
 app.get('/debug', (req, res) => {
   const filePath = path.join(__dirname, 'after-login.html');
   fs.readFile(filePath, 'utf8', (err, data) => {
@@ -103,4 +102,9 @@ app.get('/debug', (req, res) => {
       res.send(data);
     }
   });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log('✅ Server běží na portu', PORT);
 });
