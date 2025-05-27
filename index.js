@@ -1,4 +1,4 @@
-// index.js – debug-ready
+// index.js – oprava timeoutu místo waitForNavigation
 const express = require('express');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
@@ -59,12 +59,11 @@ async function loginAndGetToken() {
     if (loginButton) {
       await loginButton.click();
       console.log('🔐 Klik na tlačítko přihlášení');
-      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 });
+      await page.waitForTimeout(8000); // změna zde místo waitForNavigation
     } else {
       console.log('❌ Nenašel jsem tlačítko přihlášení');
     }
 
-    // Kliknutí na profil (fallback pro ladění)
     const profileBtn = await page.$('.profiles__avatar--image');
     if (profileBtn) {
       await profileBtn.click();
