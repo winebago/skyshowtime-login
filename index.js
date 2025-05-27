@@ -1,15 +1,11 @@
 // index.js
 const express = require('express');
-const puppeteer = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 
-puppeteer.use(StealthPlugin());
-
 const app = express();
 
-// ZADRÁTOVANÉ PŘIHLAŠOVACÍ ÚDAJE
 const SKY_EMAIL = 'tomas.vyskocil@seznam.cz';
 const SKY_PASSWORD = 'Gebruq-rimwum-5nawzu';
 
@@ -18,7 +14,6 @@ async function loginAndGetToken() {
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
-  
   const page = await browser.newPage();
 
   let jwtToken = null;
@@ -37,33 +32,38 @@ async function loginAndGetToken() {
       timeout: 60000
     });
 
-    await page.waitForSelector('#onetrust-accept-btn-handler', { timeout: 5000 });
-    await page.click('#onetrust-accept-btn-handler');
-    await page.waitForTimeout(1000);
+    const acceptCookies = await page.$('#onetrust-accept-btn-handler');
+    if (acceptCookies) {
+      await acceptCookies.click();
+      await page.waitForTimeout(1000);
+    }
 
-    await page.type('input[name="userIdentifier"]', SKY_EMAIL);
-    await page.type('input[name="password"]', SKY_PASSWORD);
+    await page.type('input[name="userIdentifier"]', SKY_EMAIL, { delay: 100 });
+    await page.type('input[name="password"]', SKY_PASSWORD, { delay: 100 });
 
-    await page.evaluate(() => {
-      const checkbox = document.querySelector('input[name="rememberMe"]');
-      if (checkbox) checkbox.checked = false;
-    });
+    const checkbox = await page.$('input[name="rememberMe"]');
+    if (checkbox) await checkbox.click();
 
     await page.evaluate(() => {
       const hidden = document.createElement('input');
       hidden.type = 'hidden';
       hidden.name = 'isWeb';
       hidden.value = 'true';
-      document.querySelector('form').appendChild(hidden);
+      document.querySelector('form')?.appendChild(hidden);
     });
 
-    await page.click('[data-testid="sign-in-form__submit"]');
-    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 });
+    const loginButton = await page.$('[data-testid="sign-in-form__submit"]');
+    if (loginButton) {
+      await loginButton.click();
+      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 });
+    }
 
-    // Klik na profil
-    await page.waitForSelector('.profiles__avatar--image', { timeout: 10000 });
-    await page.click('.profiles__avatar--image');
-    await page.waitForTimeout(3000);
+    // Kliknutí na profil
+    const profileBtn = await page.$('.profiles__avatar--image');
+    if (profileBtn) {
+      await profileBtn.click();
+      await page.waitForTimeout(3000);
+    }
 
     const html = await page.content();
     fs.writeFileSync('after-login.html', html, 'utf8');
@@ -109,4 +109,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log('✅ Server běží na portu', PORT);
 });
-
