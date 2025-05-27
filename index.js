@@ -89,3 +89,18 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log('✅ Server běží na portu', PORT);
 });
+
+const path = require('path');
+
+app.get('/debug', (req, res) => {
+  const filePath = path.join(__dirname, 'after-login.html');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('❌ Nepodařilo se načíst HTML:', err);
+      res.status(500).send('Chyba při načítání HTML');
+    } else {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(data);
+    }
+  });
+});
