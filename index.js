@@ -1,4 +1,4 @@
-// index.js
+// index.js – debug-ready
 const express = require('express');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
@@ -27,6 +27,7 @@ async function loginAndGetToken() {
   });
 
   try {
+    console.log('🌐 Načítám přihlašovací stránku...');
     await page.goto('https://www.skyshowtime.com/cz/signin', {
       waitUntil: 'networkidle2',
       timeout: 60000
@@ -36,10 +37,12 @@ async function loginAndGetToken() {
     if (acceptCookies) {
       await acceptCookies.click();
       await page.waitForTimeout(1000);
+      console.log('🍪 Přijaty cookies');
     }
 
-    await page.type('input[name="userIdentifier"]', SKY_EMAIL, { delay: 100 });
-    await page.type('input[name="password"]', SKY_PASSWORD, { delay: 100 });
+    console.log('📨 Zadávám přihlašovací údaje...');
+    await page.type('input[name="userIdentifier"]', SKY_EMAIL, { delay: 50 });
+    await page.type('input[name="password"]', SKY_PASSWORD, { delay: 50 });
 
     const checkbox = await page.$('input[name="rememberMe"]');
     if (checkbox) await checkbox.click();
@@ -55,18 +58,26 @@ async function loginAndGetToken() {
     const loginButton = await page.$('[data-testid="sign-in-form__submit"]');
     if (loginButton) {
       await loginButton.click();
+      console.log('🔐 Klik na tlačítko přihlášení');
       await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 });
+    } else {
+      console.log('❌ Nenašel jsem tlačítko přihlášení');
     }
 
-    // Kliknutí na profil
+    // Kliknutí na profil (fallback pro ladění)
     const profileBtn = await page.$('.profiles__avatar--image');
     if (profileBtn) {
       await profileBtn.click();
+      console.log('👤 Kliknuto na profil');
       await page.waitForTimeout(3000);
+    } else {
+      console.log('❌ Nenašel jsem profil');
     }
 
     const html = await page.content();
     fs.writeFileSync('after-login.html', html, 'utf8');
+    await page.screenshot({ path: 'screenshot.png', fullPage: true });
+    console.log('✅ Uložena stránka a screenshot');
   } catch (err) {
     console.error('❌ Chyba při přihlášení:', err);
   }
